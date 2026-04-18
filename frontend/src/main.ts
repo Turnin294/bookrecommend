@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
 import './style.css'
 import App from './App.vue'
@@ -8,15 +9,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 const app = createApp(App)
 
-// 基础路由配置
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { 
-      path: '/login', 
-      component: () => import('./views/Login.vue'),
-      name: 'Login'
-    },
+    { path: '/login', component: () => import('./views/Login.vue'), name: 'Login' },
+    { path: '/register', component: () => import('./views/Register.vue'), name: 'Register' },
     { 
       path: '/', 
       component: () => import('./layout/MainLayout.vue'),
@@ -40,15 +37,23 @@ const router = createRouter({
   ]
 })
 
-// 路由守卫 (简单演示，后期完善)
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
-  if (to.name !== 'Login' && !token) next({ name: 'Login' })
-  else next()
+  const role = localStorage.getItem('role')
+
+  if (to.path === '/login' || to.path === '/register') {
+    next()
+  } else if (!token) {
+    next('/login')
+  } else if (to.path.startsWith('/admin') && role !== '1') {
+    next('/')
+  } else {
+    next()
+  }
 })
 
 app.use(createPinia())
 app.use(router)
-app.use(ElementPlus)
+app.use(ElementPlus, { locale: zhCn })
 
 app.mount('#app')

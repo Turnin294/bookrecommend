@@ -1,9 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+@import "tailwindcss";
 
 :root {
   --el-color-primary: #C5A059;
+  --el-border-radius-base: 0px;
+  
+  /* Tailwind v4 变量映射 (如果需要手动映射旧版配置) */
+  --color-ivory: #FDFCF8;
+  --color-ink: #1A1A1A;
+  --color-gold: #C5A059;
+  --font-display: "Playfair Display", serif;
 }
 
 /* 典雅的滚动条 */
@@ -24,24 +31,37 @@
   background: #C5A059;
 }
 
-/* 全局重写 ElementPlus 基础样式，使其符合象牙档案馆风格 */
-.el-button--primary {
-  --el-button-bg-color: #1A1A1A;
-  --el-button-border-color: #1A1A1A;
-  --el-button-hover-bg-color: #C5A059;
-  --el-button-hover-border-color: #C5A059;
-  border-radius: 0; /* 极致简约，采用直角 */
-  font-family: 'Playfair Display', serif;
-  letter-spacing: 0.05em;
+/* 全局基调 */
+body {
+  background-color: var(--color-ivory);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 覆盖 ElementPlus 默认样式 */
+.el-button {
+  border-radius: 0 !important;
+  font-family: var(--font-display) !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .el-input__wrapper {
-  background-color: transparent !important;
-  box-shadow: 0 1px 0 0 #E5E5E5 !important;
+  background-color: #F9F7F2 !important; /* 淡淡的纸张底色 */
+  box-shadow: none !important;
+  border: 1px solid rgba(26, 26, 26, 0.1) !important; /* 极细的墨色边框 */
   border-radius: 0 !important;
-  padding: 0 !important;
+  padding: 8px 12px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .el-input__wrapper.is-focus {
-  box-shadow: 0 1px 0 0 #C5A059 !important;
+  background-color: #ffffff !important;
+  border-color: #C5A059 !important; /* 聚焦时变为鎏金色 */
+  box-shadow: 0 4px 12px rgba(197, 160, 89, 0.1) !important;
+}
+
+.el-table {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
 }

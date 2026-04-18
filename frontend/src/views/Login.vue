@@ -26,24 +26,22 @@
           <p class="text-ink/60 font-sans">请登录您的私人档案馆账户</p>
         </div>
 
-        <el-form :model="form" @submit.prevent="handleLogin" class="space-y-8">
-          <div class="space-y-1">
-            <label class="text-xs uppercase tracking-widest text-ink/40 font-bold">用户名 / USERNAME</label>
+        <el-form :model="form" @submit.prevent="handleLogin" class="space-y-6">
+          <div class="space-y-3">
+            <label class="text-[10px] uppercase tracking-[0.2em] text-ink/40 font-bold ml-1">用户名 / USERNAME</label>
             <el-input 
               v-model="form.username" 
               placeholder="请输入您的用户名"
-              input-style="font-size: 1.1rem; padding-top: 0.5rem; padding-bottom: 0.5rem;"
             />
           </div>
 
-          <div class="space-y-1">
-            <label class="text-xs uppercase tracking-widest text-ink/40 font-bold">密码 / PASSWORD</label>
+          <div class="space-y-3">
+            <label class="text-[10px] uppercase tracking-[0.2em] text-ink/40 font-bold ml-1">密码 / PASSWORD</label>
             <el-input 
               v-model="form.password" 
               type="password"
               show-password
               placeholder="请输入您的安全密码"
-              input-style="font-size: 1.1rem; padding-top: 0.5rem; padding-bottom: 0.5rem;"
             />
           </div>
 
