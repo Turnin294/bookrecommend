@@ -1,0 +1,672 @@
+# 基于 Spring Boot 的个性化图书智能推荐系统 — 开发文档
+
+> **本文档面向 AI 开发者**，包含完整的模块拆解、接口规范、数据库设计与开发计划，可直接用于代码生成。
+
+---
+数据库  root Ww2225747913.
+---
+
+## 技术栈
+
+| 层级 | 技术选型 |
+|------|----------|
+| 语言 | Java 21 |
+| 后端框架 | Spring Boot 3.x |
+| 持久层 | MyBatis |
+| 数据库 | MySQL 8.x |
+| 认证安全 | JWT |
+| 前端框架 | Vue 3 + ElementPlus |
+| 数据可视化 | ECharts |
+| 接口规范 | RESTful API |
+| 架构模式 | 前后端分离 |
+
+---
+
+## 系统模块总览
+
+系统包含以下六个主要功能模块：
+
+1. 用户管理模块
+2. 图书管理模块
+3. 推荐算法模块
+4. 交互界面模块
+5. 数据分析模块
+6. 通知消息模块
+
+---
+
+## 数据库设计
+
+> 数据库名：`book_recommend`，字符集：`utf8mb4`
+
+### 用户表 `user`
+
+```sql
+CREATE TABLE user (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username     VARCHAR(64)  NOT NULL UNIQUE COMMENT '用户名',
+    password     VARCHAR(255) NOT NULL COMMENT 'BCrypt 加密密码',
+    email        VARCHAR(128) COMMENT '邮箱',
+    avatar       VARCHAR(255) COMMENT '头像URL',
+    role         TINYINT      NOT NULL DEFAULT 0 COMMENT '0=普通用户 1=管理员',
+    status       TINYINT      NOT NULL DEFAULT 1 COMMENT '1=正常 0=禁用',
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### 用户画像表 `user_profile`
+
+```sql
+CREATE TABLE user_profile (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id      BIGINT NOT NULL UNIQUE,
+    interests    JSON   COMMENT '兴趣标签数组，如 ["科幻","历史"]',
+    favorite_categories JSON COMMENT '偏好分类ID数组',
+    updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+```
+
+### 图书表 `book`
+
+```sql
+CREATE TABLE book (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title        VARCHAR(255) NOT NULL COMMENT '书名',
+    author       VARCHAR(128) COMMENT '作者',
+    isbn         VARCHAR(20)  UNIQUE COMMENT 'ISBN',
+    category_id  BIGINT       COMMENT '分类ID',
+    description  TEXT         COMMENT '图书简介',
+    cover        VARCHAR(255) COMMENT '封面URL',
+    publisher    VARCHAR(128) COMMENT '出版社',
+    publish_date DATE         COMMENT '出版日期',
+    tags         JSON         COMMENT '标签数组，如 ["科幻","硬核"]',
+    stock        INT          NOT NULL DEFAULT 0 COMMENT '库存数量',
+    status       TINYINT      NOT NULL DEFAULT 1 COMMENT '1=上架 0=下架',
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### 图书分类表 `book_category`
+
+```sql
+CREATE TABLE book_category (
+    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name       VARCHAR(64) NOT NULL UNIQUE COMMENT '分类名称',
+    parent_id  BIGINT DEFAULT 0 COMMENT '父分类ID，0表示顶级',
+    sort       INT DEFAULT 0 COMMENT '排序权重',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 用户行为表 `user_behavior`
+
+> 记录用户阅读历史与行为数据，供推荐算法使用
+
+```sql
+CREATE TABLE user_behavior (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id      BIGINT   NOT NULL COMMENT '用户ID',
+    book_id      BIGINT   NOT NULL COMMENT '图书ID',
+    behavior_type TINYINT NOT NULL COMMENT '1=浏览 2=收藏 3=评分 4=完读',
+    score        TINYINT  COMMENT '评分，1-5，behavior_type=3时有效',
+    duration     INT      COMMENT '阅读时长（秒），behavior_type=4时有效',
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    INDEX idx_book (book_id),
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (book_id) REFERENCES book(id)
+);
+```
+
+### 推荐结果表 `recommendation`
+
+```sql
+CREATE TABLE recommendation (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id      BIGINT         NOT NULL COMMENT '推荐目标用户',
+    book_id      BIGINT         NOT NULL COMMENT '推荐图书',
+    score        DECIMAL(5,4)   NOT NULL COMMENT '推荐分值 0~1',
+    reason       VARCHAR(255)   COMMENT '推荐理由说明',
+    algorithm    VARCHAR(32)    COMMENT '算法标识，如 cf/content/hybrid',
+    is_read      TINYINT        DEFAULT 0 COMMENT '用户是否已查看该推荐',
+    created_at   DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (book_id) REFERENCES book(id)
+);
+```
+
+### 通知消息表 `notification`
+
+```sql
+CREATE TABLE notification (
+    id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id      BIGINT       NOT NULL COMMENT '接收用户ID',
+    title        VARCHAR(128) NOT NULL COMMENT '通知标题',
+    content      TEXT         NOT NULL COMMENT '通知内容',
+    type         TINYINT      NOT NULL COMMENT '1=系统通知 2=推荐通知',
+    is_read      TINYINT      NOT NULL DEFAULT 0 COMMENT '0=未读 1=已读',
+    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+```
+
+---
+
+## 后端接口规范
+
+> Base URL: `/api/v1`
+> 除登录/注册外，所有接口需在 Header 携带：`Authorization: Bearer <token>`
+> 统一响应结构：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {}
+}
+```
+
+---
+
+### 1. 用户管理模块
+
+#### 1.1 注册
+
+```
+POST /api/v1/auth/register
+```
+
+请求体：
+
+```json
+{
+  "username": "string",
+  "password": "string",
+  "email": "string"
+}
+```
+
+- 密码使用 BCrypt 加密后存储
+- 用户名唯一校验，重复返回 400
+
+响应：
+
+```json
+{
+  "code": 200,
+  "message": "注册成功",
+  "data": { "userId": 1 }
+}
+```
+
+#### 1.2 登录
+
+```
+POST /api/v1/auth/login
+```
+
+请求体：
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+- 验证通过后签发 JWT，有效期 7 天
+- 密码错误或用户不存在返回 401
+
+响应：
+
+```json
+{
+  "code": 200,
+  "data": {
+    "token": "eyJ...",
+    "userId": 1,
+    "username": "string",
+    "role": 0
+  }
+}
+```
+
+#### 1.3 获取当前用户信息
+
+```
+GET /api/v1/user/me
+```
+
+响应：返回 `user` 表字段（排除 password）+ `user_profile` 中的 interests、favorite_categories
+
+#### 1.4 更新用户信息
+
+```
+PUT /api/v1/user/me
+```
+
+请求体（字段均可选）：
+
+```json
+{
+  "email": "string",
+  "avatar": "string",
+  "interests": ["科幻", "历史"],
+  "favorite_categories": [1, 2, 3]
+}
+```
+
+#### 1.5 修改密码
+
+```
+PUT /api/v1/user/me/password
+```
+
+请求体：
+
+```json
+{
+  "oldPassword": "string",
+  "newPassword": "string"
+}
+```
+
+#### 1.6 管理员：用户列表
+
+```
+GET /api/v1/admin/users?page=1&size=20&keyword=
+```
+
+- 需 role=1 权限，否则返回 403
+- 支持按 username、email 关键词搜索
+
+#### 1.7 管理员：启用/禁用用户
+
+```
+PUT /api/v1/admin/users/{userId}/status
+```
+
+请求体：
+
+```json
+{ "status": 0 }
+```
+
+---
+
+### 2. 图书管理模块
+
+#### 2.1 图书列表（分页+筛选）
+
+```
+GET /api/v1/books?page=1&size=20&keyword=&categoryId=&tags=
+```
+
+- `keyword`：模糊匹配 title、author
+- `categoryId`：分类筛选
+- `tags`：标签筛选（逗号分隔）
+- 只返回 status=1 的图书
+
+#### 2.2 图书详情
+
+```
+GET /api/v1/books/{bookId}
+```
+
+响应：返回图书全部字段 + 分类名称
+
+#### 2.3 图书搜索
+
+```
+GET /api/v1/books/search?q=关键词
+```
+
+- 匹配 title、author、description、tags
+
+#### 2.4 管理员：新增图书
+
+```
+POST /api/v1/admin/books
+```
+
+请求体：
+
+```json
+{
+  "title": "string",
+  "author": "string",
+  "isbn": "string",
+  "categoryId": 1,
+  "description": "string",
+  "cover": "string",
+  "publisher": "string",
+  "publishDate": "2024-01-01",
+  "tags": ["科幻", "太空"],
+  "stock": 100
+}
+```
+
+#### 2.5 管理员：编辑图书
+
+```
+PUT /api/v1/admin/books/{bookId}
+```
+
+请求体同新增，字段可选
+
+#### 2.6 管理员：上架/下架图书
+
+```
+PUT /api/v1/admin/books/{bookId}/status
+```
+
+```json
+{ "status": 0 }
+```
+
+#### 2.7 分类列表
+
+```
+GET /api/v1/categories
+```
+
+响应：返回树形结构分类列表
+
+#### 2.8 管理员：新增分类
+
+```
+POST /api/v1/admin/categories
+```
+
+```json
+{
+  "name": "string",
+  "parentId": 0,
+  "sort": 1
+}
+```
+
+---
+
+### 3. 推荐算法模块
+
+#### 3.1 获取个性化推荐列表
+
+```
+GET /api/v1/recommend?size=10
+```
+
+- 从 `recommendation` 表中取当前用户最新一批推荐结果，按 score 降序
+- 若表中无记录（新用户），降级为按热度排行返回
+
+响应：
+
+```json
+{
+  "code": 200,
+  "data": [
+    {
+      "bookId": 1,
+      "title": "string",
+      "author": "string",
+      "cover": "string",
+      "score": 0.92,
+      "reason": "根据您的阅读历史推荐",
+      "algorithm": "hybrid"
+    }
+  ]
+}
+```
+
+#### 3.2 记录用户行为
+
+```
+POST /api/v1/behavior
+```
+
+```json
+{
+  "bookId": 1,
+  "behaviorType": 1,
+  "score": null,
+  "duration": null
+}
+```
+
+- `behaviorType`：1=浏览、2=收藏、3=评分、4=完读
+- 每次写入 `user_behavior` 表，异步触发推荐刷新
+
+#### 3.3 触发推荐刷新（内部/定时）
+
+```
+POST /api/v1/recommend/refresh/{userId}
+```
+
+- 内部接口，由行为写入后异步调用，或定时任务触发
+- 基于该用户的 `user_behavior` 数据重新计算推荐分值，写入 `recommendation` 表
+
+**推荐算法说明（algorithm 字段标识）：**
+
+| 标识 | 算法 | 逻辑 |
+|------|------|------|
+| `content` | 基于内容 | 根据用户 interests / favorite_categories，与图书 tags / category_id 做匹配打分 |
+| `cf` | 协同过滤 | 找到行为相似的其他用户，将其高分图书推荐给当前用户 |
+| `hybrid` | 混合 | content 分值与 cf 分值加权求和（各占 50%） |
+
+新用户（行为数据不足5条）：仅使用 `content` 算法；数据充足后切换为 `hybrid`。
+
+---
+
+### 4. 数据分析模块
+
+#### 4.1 用户行为统计（管理员）
+
+```
+GET /api/v1/admin/analysis/behavior?startDate=&endDate=
+```
+
+响应：
+
+```json
+{
+  "data": {
+    "totalBrowse": 1200,
+    "totalFavorite": 340,
+    "totalRating": 210,
+    "totalRead": 98,
+    "dailyTrend": [
+      { "date": "2025-12-01", "count": 45 }
+    ]
+  }
+}
+```
+
+#### 4.2 推荐效果统计（管理员）
+
+```
+GET /api/v1/admin/analysis/recommend?startDate=&endDate=
+```
+
+响应：
+
+```json
+{
+  "data": {
+    "totalRecommended": 5000,
+    "totalClicked": 1200,
+    "clickRate": 0.24,
+    "algorithmBreakdown": [
+      { "algorithm": "hybrid", "count": 3000, "clickRate": 0.28 }
+    ]
+  }
+}
+```
+
+#### 4.3 图书热度排行
+
+```
+GET /api/v1/analysis/hot-books?limit=10
+```
+
+- 按 `user_behavior` 中的行为次数统计，behaviorType 加权（完读权重最高）
+
+#### 4.4 分类分布统计
+
+```
+GET /api/v1/admin/analysis/categories
+```
+
+响应：各分类下图书数量及用户行为次数，供 ECharts 饼图使用
+
+---
+
+### 5. 通知消息模块
+
+#### 5.1 获取当前用户通知列表
+
+```
+GET /api/v1/notifications?page=1&size=20&isRead=
+```
+
+- `isRead`：0=未读、1=已读、不传=全部
+
+#### 5.2 标记通知为已读
+
+```
+PUT /api/v1/notifications/{notificationId}/read
+```
+
+#### 5.3 全部标记已读
+
+```
+PUT /api/v1/notifications/read-all
+```
+
+#### 5.4 未读通知数量
+
+```
+GET /api/v1/notifications/unread-count
+```
+
+响应：
+
+```json
+{ "data": { "count": 5 } }
+```
+
+#### 5.5 管理员：发送系统通知
+
+```
+POST /api/v1/admin/notifications
+```
+
+```json
+{
+  "userIds": [1, 2, 3],
+  "title": "string",
+  "content": "string",
+  "type": 1
+}
+```
+
+- `userIds` 为空数组时，广播给全部用户
+
+---
+
+## 前端页面规划
+
+| 页面 | 路由 | 说明 |
+|------|------|------|
+| 登录/注册 | `/login` `/register` | JWT 登录，token 存 localStorage |
+| 首页 | `/` | 推荐图书列表，调用 `GET /recommend` |
+| 图书列表 | `/books` | 分页+筛选+搜索 |
+| 图书详情 | `/books/:id` | 详情展示，点击触发浏览行为记录 |
+| 个人中心 | `/profile` | 用户信息、兴趣偏好修改 |
+| 数据看板 | `/dashboard` | ECharts 图表，管理员可见 |
+| 消息通知 | `/notifications` | 通知列表，未读徽标 |
+| 管理后台 | `/admin/*` | 用户管理、图书管理，需 role=1 |
+
+---
+
+## 安全规范
+
+- 密码：BCrypt 加密存储，不可逆
+- JWT：Header 携带，服务端验证签名与有效期，过期返回 401
+- 权限：`role=0` 普通用户，`role=1` 管理员；admin 接口通过拦截器统一校验，未授权返回 403
+- 所有用户输入做非空校验和长度校验，防止 SQL 注入（MyBatis 使用 `#{}` 占位符）
+
+---
+
+## 项目目录结构（后端参考）
+
+```
+src/main/java/com/example/bookrecommend/
+├── config/
+│   ├── SecurityConfig.java       # JWT 拦截器注册
+│   └── MybatisConfig.java
+├── controller/
+│   ├── AuthController.java
+│   ├── UserController.java
+│   ├── BookController.java
+│   ├── RecommendController.java
+│   ├── BehaviorController.java
+│   ├── AnalysisController.java
+│   ├── NotificationController.java
+│   └── admin/
+│       ├── AdminUserController.java
+│       ├── AdminBookController.java
+│       └── AdminNotificationController.java
+├── service/
+│   ├── AuthService.java
+│   ├── UserService.java
+│   ├── BookService.java
+│   ├── RecommendService.java
+│   ├── BehaviorService.java
+│   ├── AnalysisService.java
+│   └── NotificationService.java
+├── mapper/
+│   ├── UserMapper.java
+│   ├── BookMapper.java
+│   ├── UserBehaviorMapper.java
+│   ├── RecommendationMapper.java
+│   └── NotificationMapper.java
+├── entity/
+│   ├── User.java
+│   ├── UserProfile.java
+│   ├── Book.java
+│   ├── BookCategory.java
+│   ├── UserBehavior.java
+│   ├── Recommendation.java
+│   └── Notification.java
+├── dto/                          # 请求/响应 DTO
+├── util/
+│   └── JwtUtil.java
+└── common/
+    └── Result.java               # 统一响应封装
+```
+
+---
+
+## 开发计划
+
+| 时间阶段 | 工作内容 |
+|----------|----------|
+| 第1－2周 | 查阅资料，准备开题报告 |
+| 第3－5周 | 掌握基本原理，进行结构分析，完成总体设计 |
+| 第6－9周 | 进行系统开发，编码实现各项功能模块 |
+| 第10周 | 进行系统测试和优化 |
+| 第11－14周 | 完成论文，准备答辩 |
+
+---
+
+## 主要参考文献
+
+1. 张莉, 陈明. 基于Spring Boot的高校图书馆个性化推荐系统设计与实现[J]. 计算机工程与应用, 2024, 60(12): 256-263.
+2. 李浩然. 基于协同过滤算法的图书推荐系统研究与实现[D]. 华中师范大学, 2023. DOI:10.27159/d.cnki.ghzsu.2023.002187.
+3. 王敏, 刘军. 智慧图书馆背景下个性化推荐系统的应用研究[J]. 图书馆学研究, 2022, (18): 45-52. DOI:10.13663/j.cnki.lj.2022.18.005.
+4. 中华人民共和国文化和旅游部. 全国智慧图书馆体系建设指南[J]. 中国图书馆学报, 2021, 47(3): 4-16.

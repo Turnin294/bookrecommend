@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --el-color-primary: #C5A059;
+}
+
+/* 典雅的滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E5E5E5;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C5A059;
+}
+
+/* 全局重写 ElementPlus 基础样式，使其符合象牙档案馆风格 */
+.el-button--primary {
+  --el-button-bg-color: #1A1A1A;
+  --el-button-border-color: #1A1A1A;
+  --el-button-hover-bg-color: #C5A059;
+  --el-button-hover-border-color: #C5A059;
+  border-radius: 0; /* 极致简约，采用直角 */
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.05em;
+}
+
+.el-input__wrapper {
+  background-color: transparent !important;
+  box-shadow: 0 1px 0 0 #E5E5E5 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.el-input__wrapper.is-focus {
+  box-shadow: 0 1px 0 0 #C5A059 !important;
+}
