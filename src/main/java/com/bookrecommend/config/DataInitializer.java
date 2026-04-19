@@ -29,98 +29,61 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (userMapper.count("") > 0) {
-            return; // 已经有数据了，不再初始化
+            return;
         }
 
-        System.out.println(">>> 正在初始化档案馆基础数据...");
+        System.out.println(">>> 正在启动【精准7本精品馆藏】初始化...");
 
         // 1. 初始化用户
-        // 管理员: admin / 123456
-        User admin = new User();
-        admin.setUsername("admin");
-        admin.setPassword(passwordEncoder.encode("123456"));
-        admin.setEmail("admin@archive.com");
-        admin.setRole(1);
-        admin.setStatus(1);
-        userMapper.insert(admin);
+        User admin = createU("admin", 1);
+        User reader = createU("reader", 0);
 
-        // 普通用户: reader / 123456
-        User reader = new User();
-        reader.setUsername("reader");
-        reader.setPassword(passwordEncoder.encode("123456"));
-        reader.setEmail("reader@archive.com");
-        reader.setRole(0);
-        reader.setStatus(1);
-        userMapper.insert(reader);
+        // 2. 初始画像 (针对这7本书的标签)
+        saveProfile(reader.getId(), List.of("文学", "推理", "科幻", "宇宙"));
 
-        // 2. 初始化用户画像 (为 reader 预设兴趣)
-        UserProfile profile = new UserProfile();
-        profile.setUserId(reader.getId());
-        profile.setInterests(List.of("科幻", "技术", "哲学"));
-        userProfileMapper.insert(profile);
-
-        // 3. 初始化分类
-        String[] catNames = {"文学", "技术", "科幻", "艺术", "历史"};
-        for (int i = 0; i < catNames.length; i++) {
-            BookCategory cat = new BookCategory();
-            cat.setName(catNames[i]);
-            cat.setParentId(0L);
-            cat.setSort(10 - i);
-            categoryMapper.insert(cat);
+        // 3. 建立分类
+        String[] cats = {"文学", "技术", "科幻", "艺术", "历史"};
+        for (int i = 0; i < cats.length; i++) {
+            BookCategory c = new BookCategory();
+            c.setName(cats[i]);
+            c.setParentId(0L);
+            c.setSort(100 - i);
+            categoryMapper.insert(c);
         }
 
-        // 4. 初始化图书 (精选几本具有视觉冲击力的书)
-        initBooks();
+        // 4. 灌入 7 本真·图书 (封面 100% 存在于本地)
+        b("人类简史", "尤瓦尔·赫拉利", "9787508647357", 5L, "一部关于人类进化的震撼史诗。", List.of("历史", "科普", "哲学"));
+        b("边城", "沈从文", "9787530202562", 1L, "湘西世界的灵动与哀愁，华语文学经典。", List.of("文学", "经典", "纯爱"));
+        b("流浪地球", "刘慈欣", "9787536693968", 3L, "中国硬核科幻的代表作，带着家园去流浪。", List.of("科幻", "硬核", "刘慈欣"));
+        b("银河帝国：基地", "阿西莫夫", "9787539943039", 3L, "心理史学的传奇，银河帝国的史诗。", List.of("科幻", "经典", "阿西莫夫"));
+        b("白夜行", "东野圭吾", "9787544242516", 1L, "凄凉的爱情与绝望的守护，东野圭吾巅峰之作。", List.of("文学", "推理", "日本"));
+        b("百年孤独", "马尔克斯", "9787544253994", 1L, "拉丁美洲魔幻现实主义的巅峰。", List.of("文学", "经典", "拉美"));
+        b("解忧杂货店", "东野圭吾", "9787544270878", 1L, "温暖人心的奇迹，治愈系的推理经典。", List.of("文学", "治愈", "日本"));
 
-        System.out.println(">>> 数据初始化完成！你可以使用 admin/123456 或 reader/123456 登录。");
+        System.out.println(">>> 7本精品图书已精准上架！所有图片均为本地高清。");
     }
 
-    private void initBooks() {
-        // 科幻类
-        insertBook("三体：死神永生", "刘慈欣", "9787229030933", 3L, "地球往事三部曲的终章。", 
-            "https://img9.doubanio.com/view/subject/s/public/s4475471.jpg", List.of("科幻", "硬核", "宇宙"));
+    private User createU(String n, int r) {
+        User u = new User(); u.setUsername(n); u.setPassword(passwordEncoder.encode("123456"));
+        u.setEmail(n + "@archive.com"); u.setRole(r); u.setStatus(1);
+        userMapper.insert(u); return u;
+    }
+
+    private void saveProfile(Long uid, List<String> i) {
+        UserProfile p = new UserProfile(); p.setUserId(uid); p.setInterests(i);
+        userProfileMapper.insert(p);
+    }
+
+    private void b(String t, String a, String i, Long c, String d, List<String> tags) {
+        Book b = new Book(); b.setTitle(t); b.setAuthor(a); b.setIsbn(i); b.setCategoryId(c);
+        b.setDescription(d); 
+        // 100% 本地图源
+        b.setCover("/covers/" + i + ".jpg");
+        b.setPublisher("中国档案馆出版社"); b.setPublishDate(LocalDate.now()); b.setTags(tags);
         
-        insertBook("沙丘", "弗兰克·赫伯特", "9787550020733", 3L, "科幻史上的不朽名著，权力的史诗。", 
-            "https://img1.doubanio.com/view/subject/s/public/s29505676.jpg", List.of("科幻", "史诗", "沙漠"));
-
-        insertBook("海伯利安", "丹·西蒙斯", "9787539976723", 3L, "伟大的太空歌剧。", 
-            "https://img1.doubanio.com/view/subject/s/public/s27926135.jpg", List.of("科幻", "太空歌剧", "经典"));
-
-        // 技术类
-        insertBook("代码整洁之道", "Robert C. Martin", "9787115213907", 2L, "程序员的必读书籍。", 
-            "https://img1.doubanio.com/view/subject/s/public/s4051610.jpg", List.of("技术", "编程", "重构"));
-
-        insertBook("深入理解Java虚拟机", "周志明", "9787111641247", 2L, "Java开发者的进阶神作。", 
-            "https://img3.doubanio.com/view/subject/s/public/s33519803.jpg", List.of("技术", "Java", "JVM"));
-
-        // 文学类
-        insertBook("百年孤独", "加西亚·马尔克斯", "9787544253994", 1L, "魔幻现实主义的巅峰。", 
-            "https://img3.doubanio.com/view/subject/s/public/s6384944.jpg", List.of("文学", "经典", "拉美"));
-
-        insertBook("局外人", "阿尔贝·加缪", "9787532751501", 1L, "今天，妈妈死了。也许是昨天，我不知道。", 
-            "https://img2.doubanio.com/view/subject/s/public/s4401072.jpg", List.of("文学", "哲学", "荒诞"));
-
-        // 历史/艺术类
-        insertBook("人类简史", "尤瓦尔·赫拉利", "9787508647357", 5L, "从认知革命到生物革命。", 
-            "https://img3.doubanio.com/view/subject/s/public/s27814323.jpg", List.of("历史", "科普", "哲学"));
-            
-        insertBook("万历十五年", "黄仁宇", "9787101014303", 5L, "大明王朝的一年，也是平淡的一年。", 
-            "https://img1.doubanio.com/view/subject/s/public/s1012979.jpg", List.of("历史", "明朝", "经典"));
-    }
-
-    private void insertBook(String title, String author, String isbn, Long catId, String desc, String cover, List<String> tags) {
-        Book b = new Book();
-        b.setTitle(title);
-        b.setAuthor(author);
-        b.setIsbn(isbn);
-        b.setCategoryId(catId);
-        b.setDescription(desc);
-        b.setCover(cover);
-        b.setPublisher("象牙出版社");
-        b.setPublishDate(LocalDate.now());
-        b.setTags(tags);
-        b.setStock(100);
-        b.setStatus(1);
+        // 灌入模拟正文
+        b.setContent("### " + t + " - 第一章\n\n文字正在加载中...\n\n这是一部伟大的著作。由作者 " + a + " 倾力打造。");
+        b.setStock(100); b.setStatus(1);
         bookMapper.insert(b);
     }
 }

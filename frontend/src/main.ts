@@ -21,6 +21,7 @@ const router = createRouter({
         { path: '', component: () => import('./views/Home.vue'), name: 'Home' },
         { path: 'books', component: () => import('./views/BookList.vue'), name: 'Books' },
         { path: 'books/:id', component: () => import('./views/BookDetail.vue'), name: 'BookDetail' },
+        { path: 'books/:id/read', component: () => import('./views/Reader.vue'), name: 'Reader' },
         { path: 'profile', component: () => import('./views/Profile.vue'), name: 'Profile' },
         { path: 'notifications', component: () => import('./views/Notifications.vue'), name: 'Notifications' },
       ]

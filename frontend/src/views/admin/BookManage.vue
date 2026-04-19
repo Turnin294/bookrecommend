@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between">
       <div class="space-y-1">
         <h3 class="font-display text-2xl text-ink">图书编目 / BOOKS</h3>
-        <p class="text-xs text-ink/40 uppercase tracking-widest">录入、更新馆藏图书及分类信息</p>
+        <p class="text-xs text-ink/40 uppercase tracking-widest">录入、上传馆藏封面及正文全本</p>
       </div>
       <el-button type="primary" @click="openDialog(null)">新增馆藏图书</el-button>
     </div>
@@ -46,11 +46,46 @@
     </el-table>
 
     <!-- 编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑馆藏' : '新增馆藏'" width="600px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑馆藏' : '新增馆藏'" width="700px">
       <el-form :model="form" label-position="top" class="grid grid-cols-2 gap-x-6 gap-y-4">
         <el-form-item label="书名" class="col-span-2">
           <el-input v-model="form.title" />
         </el-form-item>
+        
+        <!-- 封面上传 -->
+        <el-form-item label="封面图片 / COVER" class="col-span-1">
+          <el-upload
+            class="cover-uploader"
+            action="/api/v1/admin/books/upload?type=cover"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+            :headers="uploadHeaders"
+          >
+            <img v-if="form.cover" :src="form.cover" class="w-full h-40 object-cover border" />
+            <div v-else class="w-full h-40 border border-dashed flex flex-col items-center justify-center text-ink/20">
+              <Plus class="w-8 h-8" />
+              <span class="text-[10px]">点击上传封面</span>
+            </div>
+          </el-upload>
+        </el-form-item>
+
+        <!-- 正文 TXT 上传 -->
+        <el-form-item label="全本内容 / FULL TEXT" class="col-span-1">
+          <el-upload
+            drag
+            action="#"
+            :auto-upload="false"
+            :on-change="handleTextFileChange"
+            :limit="1"
+            accept=".txt"
+          >
+            <div class="el-upload__text">
+              拖拽 .txt 文件或 <em>点击上传全本</em>
+            </div>
+          </el-upload>
+          <div class="mt-2 text-[10px] text-ink/40">已录入 {{ form.content?.length || 0 }} 字</div>
+        </el-form-item>
+
         <el-form-item label="作者">
           <el-input v-model="form.author" />
         </el-form-item>
@@ -63,23 +98,22 @@
         <el-form-item label="库存">
           <el-input-number v-model="form.stock" class="w-full" />
         </el-form-item>
-        <el-form-item label="封面 URL" class="col-span-2">
-          <el-input v-model="form.cover" />
-        </el-form-item>
+        
         <el-form-item label="描述" class="col-span-2">
           <el-input v-model="form.description" type="textarea" rows="4" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveBook">提交</el-button>
+        <el-button type="primary" @click="saveBook">提交存档</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
+import { Plus } from 'lucide-vue-next'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
@@ -93,10 +127,15 @@ const form = reactive({
   categoryId: 1,
   cover: '',
   description: '',
+  content: '',
   stock: 0,
   status: 1,
   tags: []
 })
+
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${localStorage.getItem('token')}`
+}))
 
 const fetchBooks = async () => {
   try {
@@ -108,11 +147,28 @@ const fetchBooks = async () => {
   } catch (e) {}
 }
 
+const handleCoverSuccess = (res: any) => {
+  if (res.code === 200) {
+    form.cover = res.data
+    ElMessage.success('封面上传成功')
+  }
+}
+
+// 处理 TXT 文件读取
+const handleTextFileChange = (file: any) => {
+  const reader = new FileReader()
+  reader.onload = (e: any) => {
+    form.content = e.target.result
+    ElMessage.success('全本内容已解析')
+  }
+  reader.readAsText(file.raw, 'UTF-8')
+}
+
 const openDialog = (book: any) => {
   if (book) {
     Object.assign(form, book)
   } else {
-    Object.assign(form, { id: null, title: '', author: '', isbn: '', categoryId: 1, cover: '', description: '', stock: 0, status: 1, tags: [] })
+    Object.assign(form, { id: null, title: '', author: '', isbn: '', categoryId: 1, cover: '', description: '', content: '', stock: 0, status: 1, tags: [] })
   }
   dialogVisible.value = true
 }
@@ -145,3 +201,9 @@ const toggleStatus = async (book: any) => {
 
 onMounted(fetchBooks)
 </script>
+
+<style scoped>
+.cover-uploader :deep(.el-upload) {
+  width: 100%;
+}
+</style>

@@ -17,6 +17,7 @@ public class Book {
     private String publisher;
     private LocalDate publishDate;
     private List<String> tags; // 标签数组
+    private String content; // 图书正文内容
     private Integer stock;
     private Integer status; // 1=上架 0=下架
     private LocalDateTime createdAt;

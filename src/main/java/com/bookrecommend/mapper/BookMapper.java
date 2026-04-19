@@ -27,14 +27,14 @@ public interface BookMapper {
     })
     Book findById(Long id);
 
-    @Insert("INSERT INTO book(title, author, isbn, category_id, description, cover, publisher, publish_date, tags, stock, status) " +
+    @Insert("INSERT INTO book(title, author, isbn, category_id, description, cover, publisher, publish_date, tags, content, stock, status) " +
             "VALUES(#{title}, #{author}, #{isbn}, #{categoryId}, #{description}, #{cover}, #{publisher}, #{publishDate}, " +
-            "#{tags, typeHandler=com.bookrecommend.config.JacksonTypeHandler}, #{stock}, #{status})")
+            "#{tags, typeHandler=com.bookrecommend.config.JacksonTypeHandler}, #{content}, #{stock}, #{status})")
     int insert(Book book);
 
     @Update("UPDATE book SET title=#{title}, author=#{author}, isbn=#{isbn}, category_id=#{categoryId}, " +
             "description=#{description}, cover=#{cover}, publisher=#{publisher}, publish_date=#{publishDate}, " +
-            "tags=#{tags, typeHandler=com.bookrecommend.config.JacksonTypeHandler}, stock=#{stock}, status=#{status} " +
+            "tags=#{tags, typeHandler=com.bookrecommend.config.JacksonTypeHandler}, content=#{content}, stock=#{stock}, status=#{status} " +
             "WHERE id=#{id}")
     int update(Book book);
 
