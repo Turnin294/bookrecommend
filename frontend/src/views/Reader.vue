@@ -108,15 +108,43 @@ const fetchBook = async () => {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
     book.value = res.data.data
+    
+    // 成功获取书后，拉取进度
+    fetchProgress()
   } catch (e) {
     ElMessage.error('读取卷轴失败')
   }
+}
+
+const fetchProgress = async () => {
+  try {
+    const res = await axios.get(`/api/v1/behavior/book/${route.params.id}/progress`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+    if (res.data.data > 0) {
+      currentPage.value = res.data.data
+      ElMessage.success('已为您恢复上次阅读进度')
+    }
+  } catch(e) {}
+}
+
+const saveProgress = async () => {
+  try {
+    await axios.post('/api/v1/behavior', {
+      bookId: route.params.id,
+      behaviorType: 5, // 进度记录
+      duration: currentPage.value // 存入当前页码
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
+  } catch (e) {}
 }
 
 const nextPage = () => {
   if (currentPage.value < totalPages.value - 1) {
     currentPage.value++
     window.scrollTo({ top: 0, behavior: 'smooth' })
+    saveProgress() // 翻页即保存
   } else {
     recordFinish()
   }
@@ -126,6 +154,7 @@ const prevPage = () => {
   if (currentPage.value > 0) {
     currentPage.value--
     window.scrollTo({ top: 0, behavior: 'smooth' })
+    saveProgress()
   }
 }
 

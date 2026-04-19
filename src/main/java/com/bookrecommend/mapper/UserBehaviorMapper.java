@@ -40,6 +40,15 @@ public interface UserBehaviorMapper {
     @Delete("DELETE FROM user_behavior WHERE id = #{id}")
     int deleteById(Long id);
 
+    @Select("SELECT * FROM user_behavior WHERE user_id = #{userId} AND book_id = #{bookId} AND behavior_type = 5 ORDER BY created_at DESC LIMIT 1")
+    UserBehavior findLatestProgress(@Param("userId") Long userId, @Param("bookId") Long bookId);
+
     @Select("SELECT COUNT(*) FROM user_behavior WHERE user_id = #{userId}")
     long countByUserId(Long userId);
+
+    @Select("SELECT ub.id, ub.score, ub.comment, ub.created_at as createdAt, u.username, u.avatar " +
+            "FROM user_behavior ub JOIN user u ON ub.user_id = u.id " +
+            "WHERE ub.book_id = #{bookId} AND ub.behavior_type = 3 AND ub.comment IS NOT NULL AND ub.comment != '' " +
+            "ORDER BY ub.created_at DESC LIMIT #{limit}")
+    java.util.List<java.util.Map<String, Object>> findPublicReviewsByBookId(@Param("bookId") Long bookId, @Param("limit") Integer limit);
 }

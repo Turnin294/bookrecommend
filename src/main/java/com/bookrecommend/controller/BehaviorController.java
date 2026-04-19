@@ -46,6 +46,18 @@ public class BehaviorController {
             "finished", finished
         ));
     }
+
+    @GetMapping("/book/{bookId}/reviews")
+    public Result<List<Map<String, Object>>> bookReviews(@PathVariable Long bookId) {
+        return Result.success(behaviorMapper.findPublicReviewsByBookId(bookId, 20));
+    }
+
+    @GetMapping("/book/{bookId}/progress")
+    public Result<Integer> getProgress(Principal principal, @PathVariable Long bookId) {
+        User user = userMapper.findByUsername(principal.getName());
+        UserBehavior progress = behaviorMapper.findLatestProgress(user.getId(), bookId);
+        return Result.success(progress != null ? progress.getDuration() : 0);
+    }
 }
 
 @Component

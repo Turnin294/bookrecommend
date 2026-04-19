@@ -38,4 +38,12 @@ public interface BookMapper {
 
     @Update("UPDATE book SET status=#{status} WHERE id=#{id}")
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
+
+    @Select("SELECT b.* FROM book b " +
+            "JOIN user_behavior ub ON b.id = ub.book_id " +
+            "WHERE ub.user_id IN (SELECT user_id FROM user_behavior WHERE book_id = #{bookId} AND behavior_type IN (2,3,4)) " +
+            "AND b.id != #{bookId} " +
+            "GROUP BY b.id ORDER BY COUNT(ub.id) DESC LIMIT #{limit}")
+    @ResultMap("BookResultMap")
+    List<Book> findRelatedBooks(@Param("bookId") Long bookId, @Param("limit") Integer limit);
 }

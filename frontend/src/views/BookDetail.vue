@@ -14,19 +14,18 @@
       <span class="text-ink/20 italic font-serif capitalize">{{ book.title }}</span>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
       <!-- 左侧：封面展示 -->
-      <div class="lg:col-span-5 flex justify-center lg:justify-start">
+      <div class="lg:col-span-5 flex justify-center lg:justify-start sticky top-32">
         <div 
-          class="relative group cursor-pointer"
+          class="relative group cursor-pointer inline-block"
           @click="$router.push(`/books/${book.id}/read`)"
         >
           <div class="absolute -inset-4 bg-gold/5 blur-2xl group-hover:bg-gold/10 transition-colors"></div>
           <img 
-            :src="book.cover || 'https://via.placeholder.com/300x400?text=The+Archive'" 
+            :src="book.cover" 
             class="relative w-72 lg:w-96 shadow-[20px_20px_60px_-15px_rgba(0,0,0,0.3)] border border-white/20 transition-transform duration-700 group-hover:scale-[1.02]"
           />
-          <!-- 封面悬浮提示 -->
           <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 backdrop-blur-[2px]">
              <div class="bg-ivory text-ink px-6 py-2 font-display tracking-widest text-xs uppercase shadow-xl">开始阅读 / READ</div>
           </div>
@@ -47,28 +46,21 @@
           </div>
         </div>
 
-        <!-- 标签 -->
         <div class="flex flex-wrap gap-3">
-          <span 
-            v-for="tag in book.tags" 
-            :key="tag"
-            class="px-4 py-1.5 border border-ink/10 text-[10px] font-bold uppercase tracking-widest text-ink/60 hover:border-gold hover:text-gold cursor-default transition-colors"
-          >
+          <span v-for="tag in book.tags" :key="tag" class="px-4 py-1.5 border border-ink/10 text-[10px] font-bold uppercase tracking-widest text-ink/60 cursor-default">
             {{ tag }}
           </span>
         </div>
 
-        <!-- 简介 -->
         <div class="space-y-4">
           <h3 class="text-xs font-bold uppercase tracking-widest text-ink/20 border-b border-ink/5 pb-2">图书简介 / DESCRIPTION</h3>
           <p class="font-serif italic text-lg leading-relaxed text-ink/80 first-letter:text-5xl first-letter:font-display first-letter:float-left first-letter:mr-3 first-letter:mt-1">
-            {{ book.description || '该书暂无详细描述，档案馆正在抓紧录入中。' }}
+            {{ book.description || '该书暂无详细描述。' }}
           </p>
         </div>
 
         <!-- 操作区 -->
         <div class="pt-8 space-y-6">
-          <!-- 核心阅读按钮 -->
           <button 
             @click="$router.push(`/books/${book.id}/read`)"
             class="w-full bg-gold text-ink py-5 font-display text-xl tracking-[0.3em] hover:bg-ink hover:text-ivory transition-all duration-500 shadow-xl shadow-gold/20 flex items-center justify-center gap-4 group"
@@ -78,7 +70,6 @@
           </button>
 
           <div class="flex items-center gap-6">
-            <!-- 收藏按钮 -->
             <button 
               @click="handleAction(2)"
               class="flex-1 border px-8 py-4 font-display text-sm tracking-widest transition-all flex items-center justify-center gap-3 group"
@@ -88,13 +79,9 @@
               {{ isFavorited ? '已加入收藏' : '加入收藏' }}
             </button>
             
-            <!-- 评分弹窗触发 -->
             <el-popover placement="top" :width="240" trigger="click">
               <template #reference>
-                <button 
-                  class="w-14 h-14 border border-ink/10 flex items-center justify-center hover:border-gold hover:text-gold transition-colors"
-                  :class="userScore > 0 ? 'text-gold border-gold/40 bg-gold/5' : ''"
-                >
+                <button class="w-14 h-14 border border-ink/10 flex items-center justify-center hover:border-gold hover:text-gold transition-colors" :class="userScore > 0 ? 'text-gold border-gold/40 bg-gold/5' : ''">
                   <Star class="w-5 h-5" :class="userScore > 0 ? 'fill-current' : ''" />
                 </button>
               </template>
@@ -106,15 +93,45 @@
               </div>
             </el-popover>
             
-            <!-- 已读按钮 -->
-            <button 
-              @click="handleAction(4)"
-              class="w-14 h-14 border border-ink/10 flex items-center justify-center hover:border-gold transition-colors"
-              :class="isFinished ? 'text-green-600 border-green-200 bg-green-50' : 'hover:text-gold'"
-              title="标记已读"
-            >
+            <button @click="handleAction(4)" class="w-14 h-14 border border-ink/10 flex items-center justify-center hover:border-gold transition-colors" :class="isFinished ? 'text-green-600 border-green-200 bg-green-50' : 'hover:text-gold'">
               <CheckCircle class="w-5 h-5" :class="isFinished ? 'fill-current' : ''" />
             </button>
+          </div>
+        </div>
+
+        <!-- 关联推荐 -->
+        <div class="pt-20 border-t border-ink/5">
+          <h3 class="text-[10px] font-bold uppercase tracking-[0.3em] text-ink/30 mb-8 text-center">馆员还在看 / READERS ALSO LIKED</h3>
+          <div v-if="relatedBooks.length === 0" class="py-10 text-center text-ink/10 italic text-sm">“曲高和寡，暂无关联”</div>
+          <div v-else class="grid grid-cols-2 sm:grid-cols-5 gap-8">
+            <div v-for="item in relatedBooks" :key="item.id" @click="$router.push(`/books/${item.id}`)" class="group cursor-pointer space-y-3">
+              <div class="aspect-[3/4] overflow-hidden border border-ink/5">
+                <img :src="item.cover" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+              </div>
+              <div class="text-[9px] font-bold uppercase text-gold line-clamp-1">{{ item.author }}</div>
+              <div class="text-[11px] font-display text-ink leading-tight line-clamp-1 group-hover:text-gold transition-colors">{{ item.title }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 读者书评 -->
+        <div class="pt-20 space-y-8">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-ink/20 border-b border-ink/5 pb-2">读者书评 / REVIEWS</h3>
+          <div v-if="publicReviews.length === 0" class="py-10 text-center text-ink/10 italic font-serif text-sm">“石沉大海，尚无回响。”</div>
+          <div v-else class="space-y-6">
+            <div v-for="rev in publicReviews" :key="rev.id" class="p-6 bg-white/40 border border-ink/5 relative overflow-hidden group hover:bg-white/80 transition-colors">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-ink/5 flex items-center justify-center font-display text-sm font-bold">{{ rev.username.charAt(0) }}</div>
+                <div class="flex-1 space-y-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold uppercase tracking-widest">{{ rev.username }}</span>
+                    <el-rate :model-value="rev.score" disabled size="small" />
+                  </div>
+                  <p class="font-serif italic text-sm text-ink/70 leading-relaxed">“{{ rev.comment }}”</p>
+                  <div class="text-[9px] text-ink/20 uppercase tracking-tighter">{{ rev.createdAt }}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -125,20 +142,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Bookmark, Star, CheckCircle, BookOpen } from 'lucide-vue-next'
+import { Bookmark, Star, CheckCircle, BookOpen, ChevronLeft } from 'lucide-vue-next'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()
 const loading = ref(true)
 const book = ref(null)
-
-// 交互状态
 const isFavorited = ref(false)
 const isFinished = ref(false)
 const userScore = ref(0)
 const ratingValue = ref(0)
 const commentValue = ref('')
+const publicReviews = ref([])
+const relatedBooks = ref([])
 
 const fetchBook = async () => {
   loading.value = true
@@ -146,86 +163,65 @@ const fetchBook = async () => {
     const res = await axios.get(`/api/v1/books/${route.params.id}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     })
-    
     if (res.data.code === 200) {
         book.value = res.data.data
         fetchUserBehavior()
+        fetchPublicReviews()
+        fetchRelatedBooks()
         recordBehavior(1)
-    } else {
-        ElMessage.error('档案馆查无此书: ' + res.data.message)
     }
-  } catch (e: any) {
-    const status = e.response?.status
-    if (status === 401) ElMessage.error('凭证过期，请重新登录')
-    else if (status === 404) ElMessage.error('书籍档案已遗失 (404)')
-    else ElMessage.error('服务器暂时失联: ' + (e.response?.data?.message || e.message))
-  } finally {
-    loading.value = false
-  }
+  } catch (e) {} finally { loading.value = false }
 }
 
 const fetchUserBehavior = async () => {
   try {
-    const res = await axios.get('/api/v1/behavior/my', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
-    // 检查此书是否在收藏、已读列表中
+    const res = await axios.get('/api/v1/behavior/my', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
     const bId = parseInt(route.params.id as string)
     isFavorited.value = res.data.data.favorites.some((i: any) => i.bookId === bId)
     isFinished.value = res.data.data.finished.some((i: any) => i.bookId === bId)
     const rate = res.data.data.ratings.find((i: any) => i.bookId === bId)
-    if (rate) {
-        userScore.value = rate.score
-        ratingValue.value = rate.score
-        commentValue.value = rate.comment
-    }
+    if (rate) { userScore.value = rate.score; ratingValue.value = rate.score; commentValue.value = rate.comment; }
   } catch(e) {}
+}
+
+const fetchPublicReviews = async () => {
+  try {
+    const res = await axios.get(`/api/v1/behavior/book/${route.params.id}/reviews`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    publicReviews.value = res.data.data
+  } catch (e) {}
+}
+
+const fetchRelatedBooks = async () => {
+  try {
+    const res = await axios.get(`/api/v1/books/${route.params.id}/related`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    relatedBooks.value = res.data.data
+  } catch (e) {}
 }
 
 const recordBehavior = async (type: number, score: number | null = null, comment: string | null = null) => {
   try {
-    await axios.post('/api/v1/behavior', {
-      bookId: route.params.id,
-      behaviorType: type,
-      score: score,
-      comment: comment
-    }, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    })
+    await axios.post('/api/v1/behavior', { bookId: route.params.id, behaviorType: type, score, comment }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
   } catch (e) {}
 }
 
 const handleRateClick = () => {
-    if (ratingValue.value === 0) {
-      ElMessage.warning('请先选择星级')
-      return
-    }
+    if (ratingValue.value === 0) return ElMessage.warning('请先选择星级')
     userScore.value = ratingValue.value
     recordBehavior(3, ratingValue.value, commentValue.value)
     ElMessage.success('评价成功！')
+    fetchPublicReviews()
 }
 
 const handleAction = (type: number) => {
   if (type === 2) isFavorited.value = !isFavorited.value
   if (type === 4) isFinished.value = true
-  
-  const messages = {
-    2: isFavorited.value ? '已加入您的私人收藏' : '已取消收藏',
-    3: '感谢您的评分！',
-    4: '已标记为完读'
-  }
   recordBehavior(type)
-  ElMessage.success(messages[type as keyof typeof messages])
+  ElMessage.success(type === 2 ? (isFavorited.value ? '已加入收藏' : '已取消收藏') : '已标记为完读')
 }
 
 onMounted(fetchBook)
 </script>
 
 <style scoped>
-/* 针对首字下沉的微调 */
-p::after {
-  content: "";
-  display: table;
-  clear: both;
-}
+p::after { content: ""; display: table; clear: both; }
 </style>

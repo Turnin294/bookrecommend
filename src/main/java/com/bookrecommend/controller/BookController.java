@@ -16,6 +16,7 @@ import java.util.Map;
 public class BookController {
 
     private final BookService bookService;
+    private final com.bookrecommend.mapper.BookMapper bookMapper;
 
     @GetMapping("/books")
     public Result<Map<String, Object>> list(@RequestParam(defaultValue = "") String keyword,
@@ -31,6 +32,11 @@ public class BookController {
     @GetMapping("/books/{bookId}")
     public Result<com.bookrecommend.vo.BookVO> detail(@PathVariable("bookId") Long bookId) {
         return Result.success(bookService.getBookDetail(bookId));
+    }
+
+    @GetMapping("/books/{bookId}/related")
+    public Result<List<Book>> related(@PathVariable Long bookId) {
+        return Result.success(bookMapper.findRelatedBooks(bookId, 5));
     }
 
     @GetMapping("/categories")
