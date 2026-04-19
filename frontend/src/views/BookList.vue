@@ -40,13 +40,14 @@
         </ul>
       </div>
 
-      <!-- 热门标签 (静态演示或动态获取) -->
+      <!-- 热门搜索 / HOT SEARCH -->
       <div>
-        <h3 class="text-[10px] font-bold uppercase tracking-[0.3em] text-ink/30 mb-6">热门标签 / TAGS</h3>
+        <h3 class="text-[10px] font-bold uppercase tracking-[0.3em] text-ink/30 mb-6">热门搜索 / HOT SEARCH</h3>
         <div class="flex flex-wrap gap-2">
           <span 
-            v-for="tag in ['科幻', '历史', '哲学', '艺术', '技术']" 
+            v-for="tag in ['科幻', '刘慈欣', '历史', '哲学', 'Java', '东野圭吾', '推理']" 
             :key="tag"
+            @click="searchByTag(tag)"
             class="px-3 py-1 bg-ink/5 text-[10px] uppercase tracking-wider text-ink/60 hover:bg-gold hover:text-ivory cursor-pointer transition-colors"
           >
             {{ tag }}
@@ -188,6 +189,12 @@ const fetchBooks = async () => {
 const selectCategory = (id: any) => {
   selectedCategory.value = id
   queryParams.categoryId = id
+  queryParams.page = 1
+  fetchBooks()
+}
+
+const searchByTag = (tag: string) => {
+  queryParams.keyword = tag
   queryParams.page = 1
   fetchBooks()
 }
