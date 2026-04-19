@@ -3,7 +3,7 @@
     <!-- 侧边栏：现代极简设计 -->
     <aside class="w-20 lg:w-64 border-r border-ink/5 bg-white/50 backdrop-blur-md flex flex-col h-screen sticky top-0">
       <div class="h-24 flex items-center justify-center border-b border-ink/5">
-        <span class="font-display text-2xl tracking-tighter hidden lg:block">IA. Archive</span>
+        <span class="font-display text-2xl tracking-tighter hidden lg:block">象牙档案馆.</span>
         <span class="font-display text-2xl lg:hidden">IA</span>
       </div>
       
@@ -46,7 +46,7 @@
           <div class="flex items-center gap-3 group cursor-pointer" @click="$router.push('/profile')">
             <div class="text-right hidden sm:block">
               <div class="text-xs font-bold tracking-widest uppercase">{{ username }}</div>
-              <div class="text-[10px] text-ink/40 uppercase tracking-tighter">Gold Member</div>
+              <div class="text-[10px] text-ink/40 uppercase tracking-tighter">荣誉馆员 / MEMBER</div>
             </div>
             <div class="w-10 h-10 rounded-full border-2 border-ink bg-ink/10 overflow-hidden group-hover:border-gold transition-colors">
               <img v-if="avatar" :src="avatar" class="w-full h-full object-cover" />

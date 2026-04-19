@@ -86,7 +86,7 @@
           v-for="book in books" 
           :key="book.id"
           class="group cursor-pointer"
-          @click="$router.push(`/books/${book.id}`)"
+          @click="goToDetail(book.id)"
         >
           <div class="relative aspect-[3/4] mb-4 overflow-hidden border border-ink/5">
             <img 
@@ -130,11 +130,23 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Search } from 'lucide-vue-next'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const loading = ref(true)
+
+// ...
+
+const goToDetail = (id: any) => {
+  if (!id) {
+    ElMessage.error('书籍索引失效')
+    return
+  }
+  router.push(`/books/${id}`)
+}
 const categories = ref([])
 const books = ref([])
 const total = ref(0)

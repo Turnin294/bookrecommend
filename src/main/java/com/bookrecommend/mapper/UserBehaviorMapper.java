@@ -5,18 +5,40 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Delete;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface UserBehaviorMapper {
 
-    @Insert("INSERT INTO user_behavior(user_id, book_id, behavior_type, score, duration) " +
-            "VALUES(#{userId}, #{bookId}, #{behaviorType}, #{score}, #{duration})")
+    @Insert("INSERT INTO user_behavior(user_id, book_id, behavior_type, score, duration, comment) " +
+            "VALUES(#{userId}, #{bookId}, #{behaviorType}, #{score}, #{duration}, #{comment})")
     int insert(UserBehavior behavior);
+
+    @Select("SELECT ub.*, ub.book_id as bookId, b.title as bookTitle, b.cover as bookCover, b.author as bookAuthor " +
+            "FROM user_behavior ub JOIN book b ON ub.book_id = b.id " +
+            "WHERE ub.user_id = #{userId} AND ub.behavior_type = #{type} " +
+            "ORDER BY ub.created_at DESC")
+    List<Map<String, Object>> findMyBehaviorsWithType(@Param("userId") Long userId, @Param("type") Integer type);
 
     @Select("SELECT * FROM user_behavior WHERE user_id = #{userId} ORDER BY created_at DESC")
     List<UserBehavior> findByUserId(Long userId);
+
+    @Select("SELECT ub.*, u.username as username, b.title as bookTitle " +
+            "FROM user_behavior ub " +
+            "JOIN user u ON ub.user_id = u.id " +
+            "JOIN book b ON ub.book_id = b.id " +
+            "WHERE ub.behavior_type = 3 " +
+            "ORDER BY ub.created_at DESC LIMIT #{offset}, #{size}")
+    List<Map<String, Object>> findAllRatingsWithUserInfo(@Param("offset") Integer offset, @Param("size") Integer size);
+
+    @Select("SELECT COUNT(*) FROM user_behavior WHERE behavior_type = 3")
+    long countAllRatings();
+
+    @Delete("DELETE FROM user_behavior WHERE id = #{id}")
+    int deleteById(Long id);
 
     @Select("SELECT COUNT(*) FROM user_behavior WHERE user_id = #{userId}")
     long countByUserId(Long userId);

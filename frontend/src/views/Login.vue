@@ -8,12 +8,12 @@
       </div>
       
       <div class="relative z-10 max-w-md">
-        <h1 class="font-display text-ivory text-7xl mb-8 leading-tight">The Ivory<br/>Archive.</h1>
+        <h1 class="font-display text-ivory text-7xl mb-8 leading-tight">象牙<br/>档案馆.</h1>
         <p class="font-serif italic text-gold text-xl leading-relaxed opacity-80 border-l-2 border-gold pl-6">
           “书本是灵魂的镜子，<br/>而在这里，我们将为您寻回丢失的那一面。”
         </p>
         <div class="mt-16 text-ivory/40 text-sm font-sans tracking-widest uppercase">
-          Intelligent Book Recommendation System v1.0
+          智能图书推荐系统 v1.0
         </div>
       </div>
     </div>
@@ -23,12 +23,12 @@
       <div class="w-full max-w-sm">
         <div class="mb-12">
           <h2 class="font-display text-4xl text-ink mb-2">欢迎回来</h2>
-          <p class="text-ink/60 font-sans">请登录您的私人档案馆账户</p>
+          <p class="text-ink/60 font-sans">请验证您的馆员身份以继续</p>
         </div>
 
         <el-form :model="form" @submit.prevent="handleLogin" class="space-y-6">
           <div class="space-y-3">
-            <label class="text-[10px] uppercase tracking-[0.2em] text-ink/40 font-bold ml-1">用户名 / USERNAME</label>
+            <label class="text-[10px] uppercase tracking-[0.2em] text-ink/40 font-bold ml-1">账户名称 / USERNAME</label>
             <el-input 
               v-model="form.username" 
               placeholder="请输入您的用户名"
@@ -36,7 +36,7 @@
           </div>
 
           <div class="space-y-3">
-            <label class="text-[10px] uppercase tracking-[0.2em] text-ink/40 font-bold ml-1">密码 / PASSWORD</label>
+            <label class="text-[10px] uppercase tracking-[0.2em] text-ink/40 font-bold ml-1">安全密码 / PASSWORD</label>
             <el-input 
               v-model="form.password" 
               type="password"

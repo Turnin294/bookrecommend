@@ -22,9 +22,7 @@ public interface BookMapper {
                @Param("status") Integer status);
 
     @Select("SELECT * FROM book WHERE id = #{id}")
-    @Results({
-        @Result(property = "tags", column = "tags", typeHandler = com.bookrecommend.config.JacksonTypeHandler.class)
-    })
+    @ResultMap("BookResultMap")
     Book findById(Long id);
 
     @Insert("INSERT INTO book(title, author, isbn, category_id, description, cover, publisher, publish_date, tags, content, stock, status) " +

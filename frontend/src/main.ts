@@ -14,6 +14,7 @@ const router = createRouter({
   routes: [
     { path: '/login', component: () => import('./views/Login.vue'), name: 'Login' },
     { path: '/register', component: () => import('./views/Register.vue'), name: 'Register' },
+    { path: '/books/:id/read', component: () => import('./views/Reader.vue'), name: 'Reader' },
     { 
       path: '/', 
       component: () => import('./layout/MainLayout.vue'),
@@ -21,7 +22,6 @@ const router = createRouter({
         { path: '', component: () => import('./views/Home.vue'), name: 'Home' },
         { path: 'books', component: () => import('./views/BookList.vue'), name: 'Books' },
         { path: 'books/:id', component: () => import('./views/BookDetail.vue'), name: 'BookDetail' },
-        { path: 'books/:id/read', component: () => import('./views/Reader.vue'), name: 'Reader' },
         { path: 'profile', component: () => import('./views/Profile.vue'), name: 'Profile' },
         { path: 'notifications', component: () => import('./views/Notifications.vue'), name: 'Notifications' },
       ]
@@ -33,6 +33,7 @@ const router = createRouter({
         { path: 'dashboard', component: () => import('./views/admin/Dashboard.vue'), name: 'AdminDashboard' },
         { path: 'users', component: () => import('./views/admin/UserManage.vue'), name: 'UserManage' },
         { path: 'books', component: () => import('./views/admin/BookManage.vue'), name: 'BookManage' },
+        { path: 'reviews', component: () => import('./views/admin/ReviewManage.vue'), name: 'ReviewManage' },
       ]
     }
   ]

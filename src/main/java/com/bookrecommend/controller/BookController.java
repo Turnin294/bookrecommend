@@ -29,7 +29,7 @@ public class BookController {
     }
 
     @GetMapping("/books/{bookId}")
-    public Result<com.bookrecommend.vo.BookVO> detail(@PathVariable Long bookId) {
+    public Result<com.bookrecommend.vo.BookVO> detail(@PathVariable("bookId") Long bookId) {
         return Result.success(bookService.getBookDetail(bookId));
     }
 

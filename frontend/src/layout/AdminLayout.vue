@@ -44,6 +44,7 @@ import {
   LayoutDashboard, 
   Users, 
   BookOpen, 
+  MessageSquare,
   ChevronLeft 
 } from 'lucide-vue-next'
 
@@ -51,5 +52,6 @@ const adminNav = [
   { name: '数据看板', path: '/admin/dashboard', icon: LayoutDashboard },
   { name: '用户管理', path: '/admin/users', icon: Users },
   { name: '图书管理', path: '/admin/books', icon: BookOpen },
+  { name: '评价管理', path: '/admin/reviews', icon: MessageSquare },
 ]
 </script>

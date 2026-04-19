@@ -154,14 +154,26 @@ const handleCoverSuccess = (res: any) => {
   }
 }
 
-// 处理 TXT 文件读取
+// 处理 TXT 文件读取 (工业级编码自适应方案)
 const handleTextFileChange = (file: any) => {
   const reader = new FileReader()
-  reader.onload = (e: any) => {
-    form.content = e.target.result
-    ElMessage.success('全本内容已解析')
+  reader.onload = async (e: any) => {
+    const uint8Array = new Uint8Array(e.target.result)
+    
+    // 尝试 UTF-8 解码，如果抛错或包含乱码，则切换到 GBK
+    try {
+      const decoder = new TextDecoder('utf-8', { fatal: true })
+      form.content = decoder.decode(uint8Array)
+      ElMessage.success('全本内容已解析 (UTF-8)')
+    } catch (err) {
+      // UTF-8 解析失败，尝试 GBK
+      const gbkDecoder = new TextDecoder('gbk')
+      form.content = gbkDecoder.decode(uint8Array)
+      ElMessage.success('已自动识别 GBK 编码并修复乱码')
+    }
   }
-  reader.readAsText(file.raw, 'UTF-8')
+  // 以二进制方式读取，方便后续精准转码
+  reader.readAsArrayBuffer(file.raw)
 }
 
 const openDialog = (book: any) => {

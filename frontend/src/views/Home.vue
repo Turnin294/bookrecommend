@@ -18,7 +18,7 @@
         v-for="book in recommendations" 
         :key="book.bookId"
         class="group cursor-pointer"
-        @click="$router.push(`/books/${book.bookId}`)"
+        @click="goToDetail(book)"
       >
         <div class="relative aspect-[3/4] overflow-hidden bg-ink/5 mb-6">
           <img 
@@ -27,11 +27,11 @@
           />
           <!-- 匹配度角标 -->
           <div class="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 text-[10px] font-bold tracking-widest uppercase border border-ink/5">
-            {{ (book.score * 100).toFixed(0) }}% Match
+            {{ (book.score * 100).toFixed(0) }}% 契合
           </div>
           <!-- 悬浮遮罩 -->
           <div class="absolute inset-0 bg-ink/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-8 text-ivory">
-            <div class="text-xs font-bold uppercase tracking-widest text-gold mb-2">Recommendation Reason</div>
+            <div class="text-xs font-bold uppercase tracking-widest text-gold mb-2">推荐理由 / REASON</div>
             <p class="font-serif italic text-sm">{{ book.reason }}</p>
           </div>
         </div>
@@ -39,7 +39,7 @@
         <div class="space-y-2">
           <div class="text-xs uppercase tracking-[0.2em] text-gold font-bold">{{ book.author }}</div>
           <h3 class="font-display text-2xl group-hover:text-gold transition-colors line-clamp-1">{{ book.title }}</h3>
-          <div class="text-[10px] text-ink/40 uppercase tracking-widest">{{ book.algorithm }} Algorithm</div>
+          <div class="text-[10px] text-ink/40 uppercase tracking-widest">{{ book.algorithm }} 智慧算法</div>
         </div>
       </div>
     </div>
@@ -65,8 +65,21 @@ import { RefreshCw } from 'lucide-vue-next'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 const loading = ref(true)
 const recommendations = ref([])
+
+const goToDetail = (book: any) => {
+  const id = book.bookId || book.id
+  if (!id) {
+    console.error('Invalid Book ID:', book)
+    ElMessage.error('书籍索引失效，请刷新页面')
+    return
+  }
+  router.push(`/books/${id}`)
+}
 
 const fetchRecommendations = async () => {
   loading.value = true

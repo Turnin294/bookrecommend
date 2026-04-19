@@ -4,7 +4,20 @@
 
     <resultMap id="BookResultMap" type="com.bookrecommend.entity.Book">
         <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="author" column="author"/>
+        <result property="isbn" column="isbn"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="description" column="description"/>
+        <result property="cover" column="cover"/>
+        <result property="publisher" column="publisher"/>
+        <result property="publishDate" column="publish_date"/>
         <result property="tags" column="tags" typeHandler="com.bookrecommend.config.JacksonTypeHandler"/>
+        <result property="content" column="content"/>
+        <result property="stock" column="stock"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <select id="findList" resultMap="BookResultMap">

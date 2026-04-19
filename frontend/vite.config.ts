@@ -11,6 +11,8 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: true, // 监听所有地址
+    allowedHosts: true, // 允许所有公网域名（Vite 3.4+）
     proxy: {
       '/api': {
         target: 'http://localhost:8080',

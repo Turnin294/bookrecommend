@@ -65,3 +65,15 @@ body {
   --el-table-bg-color: transparent;
   --el-table-tr-bg-color: transparent;
 }
+
+/* 兴趣标签缩放动画 */
+.scale-fade-enter-active,
+.scale-fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+.scale-fade-enter-from,
+.scale-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.5);
+}
