@@ -29,7 +29,22 @@ public class RecommendServiceImpl implements RecommendService {
     @Override
     @Transactional
     public void recordBehavior(UserBehavior behavior) {
+        // 如果是收藏行为 (假设 2 代表收藏)
+        if (behavior.getBehaviorType() != null && behavior.getBehaviorType() == 2) {
+            // 先检查是否存在该记录
+            UserBehavior exist = behaviorMapper.findOneByBehavior(behavior.getUserId(), behavior.getBookId(), 2);
+            
+            if (exist != null) {
+                // 如果已经存在，说明用户是在“取消收藏”，则删除该记录
+                behaviorMapper.deleteById(exist.getId());
+                refreshRecommendations(behavior.getUserId());
+                return;
+            }
+        }
+        
+        // 插入行为
         behaviorMapper.insert(behavior);
+        
         // 实际开发中，这里可以使用 Spring Event 或 MQ 异步触发推荐刷新
         // 我们这里简化，直接同步调用刷新 (仅限小规模数据)
         refreshRecommendations(behavior.getUserId());

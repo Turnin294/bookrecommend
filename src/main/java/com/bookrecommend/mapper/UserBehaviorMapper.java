@@ -13,6 +13,9 @@ import java.util.Map;
 @Mapper
 public interface UserBehaviorMapper {
 
+    @Select("SELECT * FROM user_behavior WHERE user_id = #{userId} AND book_id = #{bookId} AND behavior_type = #{type} LIMIT 1")
+    UserBehavior findOneByBehavior(@Param("userId") Long userId, @Param("bookId") Long bookId, @Param("type") Integer type);
+
     @Insert("INSERT INTO user_behavior(user_id, book_id, behavior_type, score, duration, comment) " +
             "VALUES(#{userId}, #{bookId}, #{behaviorType}, #{score}, #{duration}, #{comment})")
     int insert(UserBehavior behavior);
